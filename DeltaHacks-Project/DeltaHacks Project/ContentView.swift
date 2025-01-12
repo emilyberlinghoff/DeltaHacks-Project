@@ -6,12 +6,9 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             if arePreferencesSet {
-                // Main screen (e.g., Dashboard)
-                DashboardView()
+                DashboardView() // Placeholder for the main dashboard
             } else {
-                // Show SignupQuestionsView for setting preferences
                 SignupQuestionsView(onPreferencesSaved: {
-                    // Update state when preferences are saved
                     arePreferencesSet = true
                 })
             }

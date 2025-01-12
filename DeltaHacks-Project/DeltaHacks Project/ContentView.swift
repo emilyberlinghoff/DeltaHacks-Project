@@ -15,16 +15,18 @@ struct ContentView: View {
                     workoutDuration: $workoutDuration
                 )
             } else {
-                PreferencesAndSignupView(onPreferencesSaved: { city, province, availability, workoutsPerWeek, length in
+                PreferencesAndSignupView(onPreferencesSaved: { city, province, availability, workoutsPerWeek, length, preferences in
                     UserDefaults.standard.set(city, forKey: "city")
                     UserDefaults.standard.set(province, forKey: "province")
                     UserDefaults.standard.set(availability, forKey: "weeklyAvailability")
                     UserDefaults.standard.set(workoutsPerWeek, forKey: "selectedWorkoutsPerWeek")
                     UserDefaults.standard.set(length, forKey: "workoutLength")
+                    UserDefaults.standard.set(preferences, forKey: "preferences")
 
                     arePreferencesSet = true
                     weeklyAvailability = availability
                     workoutDuration = length
+                    self.preferences = preferences.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 })
             }
         }

@@ -1,10 +1,24 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var arePreferencesSet: Bool = false
+
     var body: some View {
         NavigationView {
-            SignupQuestionsView() // Start directly with the preferences screen
-                .navigationBarHidden(true) // Hide navigation bar if needed
+            if arePreferencesSet {
+                // Main screen (e.g., Dashboard)
+                DashboardView()
+            } else {
+                // Show SignupQuestionsView for setting preferences
+                SignupQuestionsView(onPreferencesSaved: {
+                    // Update state when preferences are saved
+                    arePreferencesSet = true
+                })
+            }
+        }
+        .onAppear {
+            // Check if preferences are already set
+            arePreferencesSet = UserDefaults.standard.bool(forKey: "arePreferencesSet")
         }
     }
 }

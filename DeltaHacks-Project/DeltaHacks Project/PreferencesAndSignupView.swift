@@ -3,23 +3,35 @@ import SwiftUI
 struct PreferencesAndSignupView: View {
     @State private var city: String = ""
     @State private var province: String = ""
-    @State private var weeklyAvailability: [String: [String]] = [:]
+    @State private var weeklyAvailability: [String: [String]] = [
+        "Monday": [],
+        "Tuesday": [],
+        "Wednesday": [],
+        "Thursday": [],
+        "Friday": [],
+        "Saturday": [],
+        "Sunday": []
+    ]
     @State private var selectedWorkoutsPerWeek: Int = 3
     @State private var workoutLength: String = ""
+    @State private var workoutPreferences: String = ""
+    @State private var scheduledDays: [String] = []
 
-    let onPreferencesSaved: (String, String, [String: [String]], Int, Int) -> Void
+    let onPreferencesSaved: (String, String, [String: [String]], Int, Int, String) -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 SharedHeaderSection(title: "Set Your Preferences", subtitle: "Tailor your workout plan to your needs.")
 
-                SectionCard(title: "Set Your Location") {
+                SectionCard(title: "Your Location") {
                     InputField(placeholder: "City", text: $city)
+                        .foregroundColor(.black)
                     InputField(placeholder: "Province", text: $province)
+                        .foregroundColor(.black)
                 }
 
-                SectionCard(title: "Set Your Weekly Availability") {
+                SectionCard(title: "Your Weekly Availability") {
                     WeeklyAvailabilityGrid(
                         daysOfWeek: Constants.daysOfWeek,
                         timeSlots: WeeklyAvailabilityGrid.generateHalfHourTimeSlots(),
@@ -40,6 +52,43 @@ struct PreferencesAndSignupView: View {
                     InputField(placeholder: "Enter workout length", text: $workoutLength, keyboardType: .numberPad)
                 }
 
+                SectionCard(title: "Describe Your Workout Preferences") {
+                    TextEditor(text: $workoutPreferences)
+                        .frame(height: 100)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(8)
+                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.blue.opacity(0.5), lineWidth: 1)
+                        )
+                }
+
+                SectionCard(title: "Scheduled Workouts") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(scheduledDays, id: \ .self) { day in
+                            VStack(alignment: .leading) {
+                                Text(day)
+                                    .font(.headline)
+                                    .foregroundColor(.blue)
+                                if let workouts = weeklyAvailability[day], !workouts.isEmpty {
+                                    ForEach(workouts, id: \ .self) { workout in
+                                        Text("• \(workout)")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                    }
+                                } else {
+                                    Text("No workouts scheduled.")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+
                 SaveButton(title: "Save Preferences") {
                     savePreferences()
                 }
@@ -54,15 +103,29 @@ struct PreferencesAndSignupView: View {
             .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
         }
         .padding()
+        .onTapGesture {
+            hideKeyboard()
+        }
+        .onAppear {
+            scheduleWorkouts()
+        }
     }
 
     private func savePreferences() {
         let length = Int(workoutLength) ?? Constants.defaultWorkoutLength
-        onPreferencesSaved(city, province, weeklyAvailability, selectedWorkoutsPerWeek, length)
+        scheduleWorkouts()
+        onPreferencesSaved(city, province, weeklyAvailability, selectedWorkoutsPerWeek, length, workoutPreferences)
+    }
+
+    private func scheduleWorkouts() {
+        // Hardcode scheduling for Monday, Wednesday, and Friday
+        scheduledDays = ["Monday", "Wednesday", "Friday"].filter { !weeklyAvailability[$0, default: []].isEmpty }
+    }
+
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
-
-// MARK: - Reusable Components
 
 struct SharedHeaderSection: View {
     let title: String
@@ -228,11 +291,25 @@ struct WeeklyAvailabilityGrid: View {
             let formatter = { (hour: Int, minute: Int) -> String in
                 let h = hour % 12 == 0 ? 12 : hour % 12
                 let period = hour < 12 ? "AM" : "PM"
-                return String(format: "%02d:%02d \(period)", h, minute)
+                return String(format: "%02d:%02d %@", h, minute, period)
             }
             slots.append(formatter(hour, 0))
             slots.append(formatter(hour, 30))
         }
         return slots
+    }
+}
+
+struct MainContentView: View {
+    var body: some View {
+        PreferencesAndSignupView { city, province, availability, workoutsPerWeek, length, preferences in
+            // Handle the saved preferences here
+            print("City: \(city)")
+            print("Province: \(province)")
+            print("Availability: \(availability)")
+            print("Workouts Per Week: \(workoutsPerWeek)")
+            print("Workout Length: \(length)")
+            print("Workout Preferences: \(preferences)")
+        }
     }
 }

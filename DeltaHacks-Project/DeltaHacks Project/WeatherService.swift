@@ -1,58 +1,65 @@
 import Foundation
 
-// MARK: - WeatherService
 struct WeatherService {
-    private let apiKey = "6782b2c178b07fe56040c5c5"
-    private let baseURL = "https://api.tomorrow.io/v4/timelines"
+    /// Fetches hardcoded weather conditions based on location
+    func fetchWeatherConditions(for location: String, completion: @escaping (String) -> Void) {
+        // Hardcoded behavior for specific locations
+        switch location.lowercased() {
+        case "london":
+            completion("Weather for London, Ontario found.")
+        case "sydney":
+            completion("Weather for Sydney, Australia found.")
+        default:
+            completion("Weather for \(location) found.")
+        }
+    }
 
-    // Fetch weather data
+    /// Fetches geocoding data for a given address (not used with hardcoding)
+    func fetchGeocodingData(for address: String, completion: @escaping (Result<(latitude: Double, longitude: Double), Error>) -> Void) {
+        completion(.failure(URLError(.unsupportedURL))) // Placeholder for unused functionality
+    }
+
+    /// Fetches weather data for a given latitude and longitude (not used with hardcoding)
     func fetchWeatherData(latitude: Double, longitude: Double, completion: @escaping (Result<WeatherResponse, Error>) -> Void) {
-        let urlString = "\(baseURL)?location=\(latitude),\(longitude)&fields=temperature,precipitationType&timesteps=1d&units=metric&apikey=\(apiKey)"
-        guard let url = URL(string: urlString) else {
-            completion(.failure(URLError(.badURL)))
-            return
-        }
-
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-
-            guard let data = data else {
-                completion(.failure(URLError(.badServerResponse)))
-                return
-            }
-
-            do {
-                let weatherResponse = try JSONDecoder().decode(WeatherResponse.self, from: data)
-                completion(.success(weatherResponse))
-            } catch {
-                completion(.failure(error))
-            }
-        }
-        task.resume()
+        completion(.failure(URLError(.unsupportedURL))) // Placeholder for unused functionality
     }
 }
 
-// MARK: - WeatherResponse Models
+/// Weather API response model (not used with hardcoding)
 struct WeatherResponse: Codable {
-    let data: WeatherData
+    let location: Location
+    let forecast: Forecast
 }
 
-struct WeatherData: Codable {
-    let timelines: [WeatherTimeline]
+/// Location details (not used with hardcoding)
+struct Location: Codable {
+    let name: String
+    let region: String
+    let country: String
+    let lat: Double
+    let lon: Double
 }
 
-struct WeatherTimeline: Codable {
-    let intervals: [WeatherInterval]
+/// Forecast details (not used with hardcoding)
+struct Forecast: Codable {
+    let forecastday: [ForecastDay]
 }
 
-struct WeatherInterval: Codable {
-    let values: WeatherValues
+/// Forecast day details (not used with hardcoding)
+struct ForecastDay: Codable {
+    let date: String
+    let day: Day
 }
 
-struct WeatherValues: Codable {
-    let temperature: Double
-    let precipitationType: Int
+/// Day details (not used with hardcoding)
+struct Day: Codable {
+    let maxtemp_c: Double
+    let mintemp_c: Double
+    let condition: Condition
+}
+
+/// Weather condition details (not used with hardcoding)
+struct Condition: Codable {
+    let text: String
+    let icon: String
 }

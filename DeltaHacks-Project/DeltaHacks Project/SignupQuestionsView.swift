@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SignupQuestionsView: View {
     @State private var age: String = ""
-    @State private var selectedOccupation: String = "Student" // Default option
+    @State private var selectedOccupation: String = "Student"
     @State private var prefersOutdoorWorkout: Bool = false
 
     // Occupation options for the dropdown
@@ -29,22 +29,22 @@ struct SignupQuestionsView: View {
                 Toggle("Prefer outdoor workouts?", isOn: $prefersOutdoorWorkout)
             }
 
-            // Submit button
+            // Next button to proceed (e.g., navigate to dashboard)
             Button(action: {
-                // Handle signup logic here
+                // Handle saving preferences or navigation to dashboard
                 print("Age: \(age)")
                 print("Occupation: \(selectedOccupation)")
                 print("Outdoor Preference: \(prefersOutdoorWorkout)")
             }) {
-                Text("Submit")
+                Text("Next")
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.blue)
                     .foregroundColor(.white)
-                    .cornerRadius(8)
+                    .cornerRadius(10)
             }
         }
-        .navigationTitle("Sign Up")
+        .navigationTitle("Set Your Preferences")
     }
 }
 

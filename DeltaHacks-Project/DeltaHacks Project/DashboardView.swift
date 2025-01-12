@@ -8,45 +8,36 @@ struct DashboardView: View {
     @State private var workoutSchedule: [(date: Date, description: String)] = []
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("Welcome Back!")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.top, 20)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                SharedHeaderSection(title: "Welcome Back!", subtitle: "Here's your personalized workout schedule.")
 
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Your Workout Schedule")
-                            .font(.headline)
-
-                        if workoutSchedule.isEmpty {
-                            Text("No schedule available.")
-                                .foregroundColor(.gray)
-                        } else {
-                            ForEach(workoutSchedule, id: \.date) { item in
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text(formatDate(item.date))
-                                        .font(.subheadline)
-                                        .bold()
-                                    Text(item.description)
-                                        .font(.body)
-                                        .foregroundColor(.gray)
-                                }
-                                .padding(.bottom, 5)
-                            }
+                SectionCard(title: "Your Workout Schedule") {
+                    if workoutSchedule.isEmpty {
+                        Text("No schedule available.")
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                    } else {
+                        ForEach(workoutSchedule, id: \ .date) { item in
+                            ScheduleRow(date: item.date, description: item.description)
                         }
                     }
-                    .padding()
+                }
 
-                    Spacer()
-                }
-                .padding()
-                .onAppear {
-                    generateWorkoutSchedule()
-                }
+                Spacer()
             }
-            .navigationTitle("Dashboard")
+            .padding()
+            .background(LinearGradient(
+                gradient: Gradient(colors: [Color.white, Color.blue.opacity(0.1)]),
+                startPoint: .top,
+                endPoint: .bottom
+            ))
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+        }
+        .padding()
+        .onAppear {
+            generateWorkoutSchedule()
         }
     }
 
@@ -94,10 +85,42 @@ struct DashboardView: View {
         let dayDifference = (weekdayIndex >= todayWeekdayIndex) ? weekdayIndex - todayWeekdayIndex : weekdayIndex - todayWeekdayIndex + 7
         return calendar.date(byAdding: .day, value: dayDifference, to: today)
     }
+}
+
+struct ScheduleRow: View {
+    let date: Date
+    let description: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(formatDate(date))
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundColor(Color.blue)
+
+            Text(description)
+                .font(.body)
+                .foregroundColor(.gray)
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(8)
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+    }
 
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, MMMM d, yyyy"
         return formatter.string(from: date)
+    }
+}
+
+struct DashboardView_Previews: PreviewProvider {
+    static var previews: some View {
+        DashboardView(
+            weeklyAvailability: .constant(["Monday": ["6:00 PM"]]),
+            preferences: .constant(["Outdoor"]),
+            workoutDuration: .constant(60)
+        )
     }
 }

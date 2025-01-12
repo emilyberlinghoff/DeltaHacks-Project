@@ -3,7 +3,8 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         NavigationView {
-            LoginSignupView()
+            SignupQuestionsView() // Start directly with the preferences screen
+                .navigationBarHidden(true) // Hide navigation bar if needed
         }
     }
 }

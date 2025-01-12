@@ -1,124 +1,77 @@
 import SwiftUI
 
 struct SignupQuestionsView: View {
-    var onPreferencesSaved: () -> Void // Closure to notify when preferences are saved
+    var onPreferencesSaved: () -> Void
 
-    @State private var selectedTimesOfDay: [String] = []
+    @State private var weeklyAvailability: [String: [String]] = [:]
     @State private var selectedWorkoutsPerWeek: Int = 3
     @State private var workoutLength: String = ""
-    @State private var isCalendarSynced: Bool = false
-    @State private var isWeatherAPIConnected: Bool = false
 
-    let timesOfDayOptions = ["Morning", "Afternoon", "Evening"]
-    let workoutPerWeekOptions = Array(1...7)
+    let daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    let timeSlots = generateHalfHourTimeSlots()
 
     var body: some View {
-        Form {
-            // Time of Day Section
-            Section(header: Text("Time of Day")) {
-                ForEach(timesOfDayOptions, id: \.self) { time in
-                    MultipleSelectionRow(title: time, isSelected: selectedTimesOfDay.contains(time)) {
-                        if selectedTimesOfDay.contains(time) {
-                            selectedTimesOfDay.removeAll { $0 == time }
-                        } else {
-                            selectedTimesOfDay.append(time)
-                        }
-                    }
-                }
-            }
+        ScrollView(.vertical) {
+            VStack(alignment: .leading) {
+                Text("Set Your Weekly Availability")
+                    .font(.headline)
+                    .padding()
 
-            // Workout Frequency Section
-            Section(header: Text("Workouts per Week")) {
-                Picker("Select Workouts per Week", selection: $selectedWorkoutsPerWeek) {
-                    ForEach(workoutPerWeekOptions, id: \.self) { number in
+                // Availability Grid
+                AvailabilityGrid(
+                    daysOfWeek: daysOfWeek,
+                    timeSlots: timeSlots,
+                    weeklyAvailability: $weeklyAvailability
+                )
+
+                // Workout Frequency Section
+                Picker("Workouts per Week", selection: $selectedWorkoutsPerWeek) {
+                    ForEach(1...7, id: \.self) { number in
                         Text("\(number) workouts")
                     }
                 }
                 .pickerStyle(WheelPickerStyle())
-            }
+                .padding()
 
-            // Workout Length Section
-            Section(header: Text("Workout Length (in minutes)")) {
-                TextField("Enter workout length", text: $workoutLength)
+                // Workout Length Section
+                TextField("Workout Length (in minutes)", text: $workoutLength)
                     .keyboardType(.numberPad)
-            }
-
-            // Sync Apple Calendar
-            Section(header: Text("Sync with Apple Calendar")) {
-                Toggle("Allow Read/Write Access", isOn: $isCalendarSynced)
-                    .onChange(of: isCalendarSynced) { newValue in
-                        if newValue {
-                            requestCalendarPermissions()
-                        }
-                    }
-            }
-
-            // Connect Weather API
-            Section(header: Text("Connect to Weather API")) {
-                Toggle("Enable Weather Integration", isOn: $isWeatherAPIConnected)
-                    .onChange(of: isWeatherAPIConnected) { newValue in
-                        if newValue {
-                            connectToWeatherAPI()
-                        }
-                    }
-            }
-
-            // Save Preferences Button
-            Button(action: savePreferences) {
-                Text("Save Preferences")
-                    .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+
+                // Save Preferences Button
+                Button(action: savePreferences) {
+                    Text("Save Preferences")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .padding()
+                }
             }
         }
         .navigationTitle("Set Your Preferences")
     }
 
     private func savePreferences() {
-        // Save preferences to UserDefaults
         UserDefaults.standard.set(true, forKey: "arePreferencesSet")
-        UserDefaults.standard.set(selectedTimesOfDay, forKey: "selectedTimesOfDay")
+        UserDefaults.standard.set(weeklyAvailability, forKey: "weeklyAvailability")
         UserDefaults.standard.set(selectedWorkoutsPerWeek, forKey: "selectedWorkoutsPerWeek")
         UserDefaults.standard.set(workoutLength, forKey: "workoutLength")
-        UserDefaults.standard.set(isCalendarSynced, forKey: "isCalendarSynced")
-        UserDefaults.standard.set(isWeatherAPIConnected, forKey: "isWeatherAPIConnected")
-
-        // Notify parent view
         onPreferencesSaved()
     }
 
-    private func requestCalendarPermissions() {
-        print("Requesting Calendar Permissions...")
-    }
-
-    private func connectToWeatherAPI() {
-        print("Connecting to Weather API...")
-    }
-}
-
-struct MultipleSelectionRow: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Text(title)
-                Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .foregroundColor(.blue)
-                }
+    private static func generateHalfHourTimeSlots() -> [String] {
+        var slots: [String] = []
+        for hour in 0..<24 {
+            let timeFormatter = { (hour: Int, minute: Int) -> String in
+                let h = hour % 12 == 0 ? 12 : hour % 12
+                let period = hour < 12 ? "AM" : "PM"
+                return String(format: "%02d:%02d \(period)", h, minute)
             }
+            slots.append(timeFormatter(hour, 0))
+            slots.append(timeFormatter(hour, 30))
         }
-    }
-}
-
-struct SignupQuestionsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SignupQuestionsView(onPreferencesSaved: {})
+        return slots
     }
 }

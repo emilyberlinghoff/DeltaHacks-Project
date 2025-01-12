@@ -1,79 +1,103 @@
-//
-//  DashboardView.swift
-//  DeltaHacks Project
-//
-//  Created by Emily Berlinghoff on 2025-01-11.
-//
-
-
 import SwiftUI
 
 struct DashboardView: View {
-    // Example state variables to hold data
-    @State private var workoutRecommendation: String = "Take a 30-minute walk outdoors."
-    @State private var completedWorkouts: [String] = []
-    
+    @Binding var weeklyAvailability: [String: [String]]
+    @Binding var preferences: [String]
+    @Binding var workoutDuration: Int
+    @State private var city: String = "London" // Default city for testing
+    @State private var workoutSchedule: [(date: Date, description: String)] = []
+
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Greeting Section
-                Text("Welcome Back!")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding(.top, 20)
-                
-                // Workout Recommendation Section
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Today's Workout Recommendation")
-                        .font(.headline)
-                    Text(workoutRecommendation)
-                        .font(.body)
-                        .foregroundColor(.gray)
-                        .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(10)
-                }
-                .padding(.bottom, 10)
-                
-                // Completed Workouts Section
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Completed Workouts")
-                        .font(.headline)
-                    if completedWorkouts.isEmpty {
-                        Text("No workouts logged yet.")
-                            .foregroundColor(.gray)
-                    } else {
-                        List(completedWorkouts, id: \.self) { workout in
-                            Text(workout)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Welcome Back!")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .padding(.top, 20)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Your Workout Schedule")
+                            .font(.headline)
+
+                        if workoutSchedule.isEmpty {
+                            Text("No schedule available.")
+                                .foregroundColor(.gray)
+                        } else {
+                            ForEach(workoutSchedule, id: \.date) { item in
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text(formatDate(item.date))
+                                        .font(.subheadline)
+                                        .bold()
+                                    Text(item.description)
+                                        .font(.body)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.bottom, 5)
+                            }
                         }
-                        .frame(height: 200) // Adjust height as needed
                     }
+                    .padding()
+
+                    Spacer()
                 }
-                
-                Spacer()
-                
-                // Log a Workout Button
-                Button(action: {
-                    // Add a placeholder workout for testing
-                    let newWorkout = "Workout \(completedWorkouts.count + 1)"
-                    completedWorkouts.append(newWorkout)
-                }) {
-                    Text("Log a Workout")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                .padding()
+                .onAppear {
+                    generateWorkoutSchedule()
                 }
             }
-            .padding()
             .navigationTitle("Dashboard")
         }
     }
-}
 
-struct DashboardView_Previews: PreviewProvider {
-    static var previews: some View {
-        DashboardView()
+    private func generateWorkoutSchedule() {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE h:mm a"
+        var schedule: [(date: Date, description: String)] = []
+
+        for (day, times) in weeklyAvailability {
+            guard let timeString = times.first, let dayDate = getNextDate(for: day) else { continue }
+
+            if let startTime = formatter.date(from: "\(day) \(timeString)") {
+                let endTime = Calendar.current.date(byAdding: .minute, value: workoutDuration, to: startTime)
+                let weatherCondition = determineWeatherCondition(for: day)
+                if let endTime = endTime {
+                    let description = "\(formatter.string(from: startTime)) - \(formatter.string(from: endTime)) (\(weatherCondition))"
+                    schedule.append((date: dayDate, description: description))
+                }
+            }
+        }
+
+        workoutSchedule = schedule.sorted { $0.date < $1.date }
+    }
+
+    private func determineWeatherCondition(for day: String) -> String {
+        if city.lowercased() == "london" {
+            return "Indoor"
+        } else if city.lowercased() == "sydney" && day == "Monday" {
+            return "Outdoor"
+        }
+        return "Indoor"
+    }
+
+    private func getNextDate(for day: String) -> Date? {
+        let weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE"
+
+        guard let weekdayIndex = weekdays.firstIndex(of: day) else { return nil }
+
+        let today = Date()
+        let calendar = Calendar.current
+        let todayWeekdayIndex = calendar.component(.weekday, from: today) - 1
+
+        let dayDifference = (weekdayIndex >= todayWeekdayIndex) ? weekdayIndex - todayWeekdayIndex : weekdayIndex - todayWeekdayIndex + 7
+        return calendar.date(byAdding: .day, value: dayDifference, to: today)
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMMM d, yyyy"
+        return formatter.string(from: date)
     }
 }

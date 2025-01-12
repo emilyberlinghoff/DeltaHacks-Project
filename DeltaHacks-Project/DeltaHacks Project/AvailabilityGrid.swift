@@ -1,93 +1,83 @@
 import SwiftUI
 
-struct DashboardView: View {
-    // Example state variables to hold data
-    @State private var workoutRecommendation: String = "Take a 30-minute walk outdoors."
-    @State private var completedWorkouts: [String] = []
-    @State private var showMessage: Bool = false
+struct AvailabilityGrid: View {
+    let daysOfWeek: [String]
+    let timeSlots: [String]
+    @Binding var weeklyAvailability: [String: [String]]
 
     var body: some View {
-        VStack {
-            // Greeting Section
-            Text("Welcome Back!")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.top, 20)
-                .frame(maxWidth: .infinity, alignment: .center)
+        ScrollView(.horizontal) {
+            VStack(alignment: .leading) {
+                // Header Row
+                HStack {
+                    Text("Time")
+                        .frame(width: 60, height: 40)
+                        .background(Color.gray.opacity(0.3))
+                        .cornerRadius(5)
+                        .font(.caption)
+                        .bold()
 
-            Spacer()
+                    ForEach(daysOfWeek, id: \.self) { day in
+                        Text(day)
+                            .frame(width: 80, height: 40)
+                            .background(Color.gray.opacity(0.3))
+                            .cornerRadius(5)
+                            .font(.caption)
+                            .bold()
+                    }
+                }
 
-            // Workout Recommendation Section
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Today's Workout Recommendation")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Text(workoutRecommendation)
-                    .font(.body)
-                    .foregroundColor(.gray)
-                    .padding()
-                    .background(Color.blue.opacity(0.3))
-                    .cornerRadius(10)
-            }
-            .padding(.bottom, 20)
+                // Time Slots with Days
+                ForEach(timeSlots, id: \.self) { time in
+                    HStack {
+                        // Time Column
+                        Text(time)
+                            .frame(width: 60, height: 40)
+                            .background(Color.gray.opacity(0.3))
+                            .cornerRadius(5)
+                            .font(.caption)
 
-            // Completed Workouts Section
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Completed Workouts")
-                    .font(.headline)
-                    .foregroundColor(.white)
-
-                if completedWorkouts.isEmpty {
-                    Text("No workouts logged yet.")
-                        .foregroundColor(.gray)
-                } else {
-                    ForEach(completedWorkouts, id: \.self) { workout in
-                        Text(workout)
-                            .foregroundColor(.white)
+                        // Day Columns
+                        ForEach(daysOfWeek, id: \.self) { day in
+                            Button(action: {
+                                toggleAvailability(for: day, at: time)
+                            }) {
+                                Rectangle()
+                                    .fill(
+                                        weeklyAvailability[day]?.contains(time) == true ? Color.blue : Color.gray.opacity(0.2)
+                                    )
+                                    .frame(width: 80, height: 40)
+                                    .cornerRadius(5)
+                            }
+                        }
                     }
                 }
             }
-            .padding(.bottom, 20)
-
-            Spacer()
-
-            // Log a Workout Button
-            Button(action: {
-                // Add a placeholder workout for testing
-                let newWorkout = "Workout \(completedWorkouts.count + 1)"
-                completedWorkouts.append(newWorkout)
-            }) {
-                Text("Log a Workout")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .font(.title)
-                    .padding(.horizontal)
-            }
-            .frame(height: 60)
-
-            Spacer()
         }
-        .padding()
-        .background(Color.blue)  // Overall blue background for the dashboard
-        .cornerRadius(20)
-        .shadow(radius: 10)
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [Color.blue.opacity(0.6), Color.blue]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
-        .edgesIgnoringSafeArea(.all) // Ignore safe areas for background stretch
     }
-}
 
-struct DashboardView_Previews: PreviewProvider {
-    static var previews: some View {
-        DashboardView()
+    private func toggleAvailability(for day: String, at time: String) {
+        if weeklyAvailability[day]?.contains(time) == true {
+            weeklyAvailability[day]?.removeAll { $0 == time }
+        } else {
+            if weeklyAvailability[day] == nil {
+                weeklyAvailability[day] = []
+            }
+            weeklyAvailability[day]?.append(time)
+        }
+    }
+
+    static func generateHalfHourTimeSlots() -> [String] {
+        var slots: [String] = []
+        for hour in 0..<24 {
+            let formatter = { (hour: Int, minute: Int) -> String in
+                let h = hour % 12 == 0 ? 12 : hour % 12
+                let period = hour < 12 ? "AM" : "PM"
+                return String(format: "%02d:%02d \(period)", h, minute)
+            }
+            slots.append(formatter(hour, 0))
+            slots.append(formatter(hour, 30))
+        }
+        return slots
     }
 }
